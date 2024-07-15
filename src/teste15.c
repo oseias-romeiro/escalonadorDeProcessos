@@ -1,6 +1,9 @@
 /* programa exemplo para execução de 15 segundos */
 
+#include <stdio.h>
+
 int main()
 {
-    return 0;
+    printf("Rodou");
+    return ;
 }
