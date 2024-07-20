@@ -1,22 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <string.h>
 #include "process.h"
 
 #define INPUT_FILENAME "programs.txt"
 
 int main(int argc, char *argv[]) {
-    int status;
+    // int status;
     int process_count;
-    int tempo = 0;
-    int count = 0;
+    // int tempo = 0;
+    // int count = 0;
 
     Process *processes;
 
-    siginfo_t siginfo;
+    // siginfo_t siginfo;
 
     if (argc != 2) {
         perror("Uso: escalona <numero_de_cores>");

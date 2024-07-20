@@ -1,5 +1,10 @@
 #include <stdio.h>
-#
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <string.h>
+
 #ifndef PROCESS_H
 #define PROCESS_H
 #define MAX_INT 1000000
