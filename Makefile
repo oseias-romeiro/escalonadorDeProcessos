@@ -12,13 +12,12 @@ HEADER_PATH = include
 SRC_PATH = src
 BIN_PATH = bin
 DEP_PATH = dep
-TARGET_PATH = ./
 
 C_FILES = $(filter-out $(SRC_PATH)/teste15.c $(SRC_PATH)/teste30.c $(SRC_PATH)/teste.c, $(wildcard $(SRC_PATH)/*.c))
 OBJ_FILES = $(addprefix $(BIN_PATH)/,$(notdir $(C_FILES:.c=.o)))
 DEP_FILES = $(wildcard $(DEP_PATH)/*.d)
 
-EXEC = $(TARGET_PATH)/escalona
+EXEC = ./escalona
 
 ifeq ($(OS),Windows_NT)
 
