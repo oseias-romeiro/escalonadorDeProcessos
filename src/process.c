@@ -124,10 +124,14 @@ int find_next_process(Process *processes, int process_count) {
         if (processes[i].status == 'R') {
             int time = atoi(processes[i].command + 5);
             if (time < np_time) {
-                if (processes[i].own_dependencies < np_own_dependencies) {
-                    np_time = time;
-                    np_index = i;
-                }
+                np_time = time;
+                np_index = i;
+                np_own_dependencies = processes[i].own_dependencies;
+            }
+            else if (time == np_time && processes[i].own_dependencies > np_own_dependencies) {
+                np_time = time;
+                np_index = i;
+                np_own_dependencies = processes[i].own_dependencies;
             }
         }
     }
