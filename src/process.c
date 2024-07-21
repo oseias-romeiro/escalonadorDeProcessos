@@ -175,9 +175,9 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
             struct timespec start, end;
             close(fd[next_process->id-1][0]);
             clock_gettime(CLOCK_MONOTONIC, &start);
-            char *argv[2];
-            argv[0] = next_process->command;
-            argv[1]=NULL;
+            //char *argv[2];
+            //argv[0] = next_process->command;
+            //argv[1]=NULL;
             printf("teste %d\n", next_process->id);
             //execv(next_process->command, argv);
             char comando[100];
