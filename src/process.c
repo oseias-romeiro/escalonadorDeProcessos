@@ -8,7 +8,8 @@ typedef struct process {
     int * dependencies;
     int n_dependencies;
     char status;
-    int own_dependencies_time;
+    int own_dependencies;
+    pid_t pid;
 } Process;
 
 // Status list
@@ -72,15 +73,15 @@ void map_process(Process** processes, int * process_count, FILE *file){
 
 void calculate_own_dependencies(Process *processes, int process_count) {
     for (int i = 0; i < process_count; i++) {
-        int own_dependencies_time = 0;
+        int own_dependencies = 0;
         for (int j = 0; j < process_count; j++) {
             for (int k = 0; k < processes[j].n_dependencies; k++) {
                 if (processes[j].dependencies[k] == processes[i].id) {
-                    own_dependencies_time++;
+                    own_dependencies++;
                 }
             }
         }
-        processes[i].own_dependencies_time = own_dependencies_time;
+        processes[i].own_dependencies = own_dependencies;
     }
 }
 
@@ -98,7 +99,7 @@ void update_dependencies(Process *processes, int process_count, int id) {
                 update_status = 0;
             }
         }
-        if (update_status) {
+        if (update_status && processes[i].status != 'E') {
             processes[i].status = 'R';
         }
     }
@@ -123,7 +124,7 @@ int find_next_process(Process *processes, int process_count) {
         if (processes[i].status == 'R') {
             int time = atoi(processes[i].command + 5);
             if (time < np_time) {
-                if (processes[i].own_dependencies_time < np_own_dependencies) {
+                if (processes[i].own_dependencies < np_own_dependencies) {
                     np_time = time;
                     np_index = i;
                 }
@@ -133,32 +134,61 @@ int find_next_process(Process *processes, int process_count) {
     return np_index;
 }
 
-void run_on_single_core(Process *processes, int process_count) {
-    int status;
+void run_on_cores(Process *processes, int process_count, int num_cores) {
     int process_count_finished = 0;
+    int time = 0;
+    int turnaround[process_count];
+    siginfo_t siginfo;
     while (process_count_finished < process_count) {
         int next_process_index = find_next_process(processes, process_count);
-        if (next_process_index == -1) {
-            continue;
-        }
-        Process *next_process = &processes[next_process_index];
-        pid_t pid = fork();
-        if (pid == 0) {
-            printf("Executando processo %d\n", next_process->id);
-            sleep(atoi(next_process->command + 5));
-            printf("Processo %d finalizado\n", next_process->id);
-            exit(0);
-        } else {
-            waitpid(pid, &status, 0);
+        Process *next_process;
+        if (next_process_index == -1 || num_cores == 0) {
+            waitid(P_ALL, 0, &siginfo, WEXITED);
+            next_process = get_process_by_pid(processes, process_count, siginfo.si_pid);
+            if(next_process == NULL) {
+                printf("Erro ao buscar pid");
+                break;
+            }
+            turnaround[next_process->id] += atoi(next_process->command+5);
+            time = turnaround[next_process->id];
+            printf("Processo %d finalizado | ", next_process->id);
+            printf("Turnaround: %d\n", turnaround[next_process->id]);
             finish_process(processes, process_count, next_process->id);
             process_count_finished++;
+            num_cores++;
+            continue;
+        }
+        next_process = &processes[next_process_index];
+        pid_t pid = fork();
+        if (pid == 0) {
+            char *argv[2];
+            argv[0] = next_process->command;
+            argv[1]=NULL;
+            execv(next_process->command, argv);
+            exit(0);
+        } else {
+            next_process->pid = pid;
+            num_cores--;
+            turnaround[next_process->id] = time; 
+            printf("Executando processo %d\n", next_process->id);
+            next_process->status = 'E';
         }
     }
+    printf("Makespan: %d\n", time);
+}
+
+Process * get_process_by_pid(Process * processes, int process_count, pid_t pid) {
+    for(int i = 0; i < process_count; i++) {
+        if (processes[i].pid == pid) {
+            return &processes[i];
+        }
+    }
+    return NULL;
 }
 
 void print_processes(Process *processes, int process_count) {
     for (int i = 0; i < process_count; i++) {
-        printf("%d, %s, ", processes[i].id, processes[i].command);
+        printf("%d, %s, %d, ", processes[i].id, processes[i].command, processes[i].own_dependencies);
         for (int j = 0; j < processes[i].n_dependencies; j++) {
             printf("%d ", processes[i].dependencies[j]);
         }

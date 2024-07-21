@@ -4,6 +4,7 @@
 
 int main()
 {
-    printf("Rodou");
-    return ;
+    long i;
+    for (i=0; i<4000000000; i++);
+    return 0;
 }
