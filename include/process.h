@@ -22,9 +22,11 @@ void finish_process(Process *processes, int process_count, int id);
 
 int find_next_process(Process *processes, int process_count);
 
-void run_on_single_core(Process *processes, int process_count);
+void run_on_cores(Process *processes, int process_count, int num_cores);
 
 void print_processes(Process *processes, int process_count);
+
+Process * get_process_by_pid(Process * processes, int process_count, pid_t pid);
 
 
 #endif
