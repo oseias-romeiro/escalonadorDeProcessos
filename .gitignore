@@ -1,7 +1,8 @@
-**/escalona
-**/main
-**/teste15
-**/teste30
+escalona
+teste
+teste15
+teste30
 **/*.out
 **/*.o
 **/*.d
+**/.vscode

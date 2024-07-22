@@ -17,7 +17,7 @@ touch programs.txt
 ```
 - Compilando
 ```sh
-makefile all
+make all
 ```
 
 > Exemplo de [programs.txt](./programs.txt)
