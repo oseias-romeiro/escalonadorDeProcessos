@@ -55,7 +55,9 @@ void map_process(Process** processes, int * process_count, FILE *file){
                 perror("Failed to allocate memory for dependencies");
                 exit(EXIT_FAILURE);
             }
-            dependencies[dep_count++] = atoi(token);
+            if(strcmp(token, "0") != 0){
+                dependencies[dep_count++] = atoi(token);
+            }
             token = strtok(NULL, ",");
         }
 
@@ -64,9 +66,11 @@ void map_process(Process** processes, int * process_count, FILE *file){
         strncpy((*processes)[i].command, command, sizeof((*processes)[i].command) - 1);
         (*processes)[i].command[sizeof((*processes)[i].command) - 1] = '\0'; // Ensure null-termination
         (*processes)[i].dependencies = dependencies;
-        if (id == 1) {
+        // coloca em Ready se não tiver dependencias
+        if(dep_count == 0){
+            printf("Processo %d pronto\n", id);
             (*processes)[i].status = 'R';
-        } else {
+        }else {
             (*processes)[i].status = 'W';
         }
     }
@@ -182,7 +186,6 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
             //char *argv[2];
             //argv[0] = next_process->command;
             //argv[1]=NULL;
-            printf("teste %d\n", next_process->id);
             //execv(next_process->command, argv);
             char comando[100];
             sprintf(comando, "./%s", next_process->command);
