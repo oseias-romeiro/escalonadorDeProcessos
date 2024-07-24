@@ -1,9 +1,9 @@
 /*
     - Autores:
         - David Herbert de Souza Brito - 200057405
-        - Gustavo Lopes Dezan
-        - Julia Baba
-        - Oseias Romeiro
+        - Gustavo Lopes Dezan - 202033463
+        - Julia Yuri Garcia Baba - 190057921
+        - Oseias Romeiro Magalhães - 211036123
     
     - Implementação do Escalonador de Workflow de Processos, o qual é do tipo Shorted Job First
     
