@@ -25,5 +25,5 @@ make all
 ## Execução
 
 ```sh
-escalona {numero_de_cores}
+./escalona {numero_de_cores}
 ```

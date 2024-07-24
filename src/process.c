@@ -1,5 +1,4 @@
 #include "process.h"
-#include <time.h>
 
 #define MAX_INT 1000000
 
@@ -125,14 +124,10 @@ int find_next_process(Process *processes, int process_count) {
         if (processes[i].status == 'R') {
             int time = atoi(processes[i].command + 5);
             if (time < np_time) {
-                np_time = time;
-                np_index = i;
-                np_own_dependencies = processes[i].own_dependencies;
-            }
-            else if (time == np_time && processes[i].own_dependencies > np_own_dependencies) {
-                np_time = time;
-                np_index = i;
-                np_own_dependencies = processes[i].own_dependencies;
+                if (processes[i].own_dependencies < np_own_dependencies) {
+                    np_time = time;
+                    np_index = i;
+                }
             }
         }
     }
@@ -141,18 +136,9 @@ int find_next_process(Process *processes, int process_count) {
 
 void run_on_cores(Process *processes, int process_count, int num_cores) {
     int process_count_finished = 0;
-    float time = 0.0f;
-    float turnaround[process_count];
+    int time = 0;
+    int turnaround[process_count];
     siginfo_t siginfo;
-    // pipe
-    int fd[process_count][2];
-    char read_msg[100];
-    double time_used;
-    for (int i = 0; i < process_count; i++) {
-        if (pipe(fd[i]) == -1) {
-            perror("pipe creation failed");
-        }
-    }
     while (process_count_finished < process_count) {
         int next_process_index = find_next_process(processes, process_count);
         Process *next_process;
@@ -163,11 +149,10 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
                 printf("Erro ao buscar pid");
                 break;
             }
-            read(fd[next_process->id-1][0], read_msg, sizeof(read_msg));
-            turnaround[next_process->id] += atof(read_msg);
+            turnaround[next_process->id] += atoi(next_process->command+5);
             time = turnaround[next_process->id];
             printf("Processo %d finalizado | ", next_process->id);
-            printf("Turnaround: %f\n", turnaround[next_process->id]);
+            printf("Turnaround: %d\n", turnaround[next_process->id]);
             finish_process(processes, process_count, next_process->id);
             process_count_finished++;
             num_cores++;
@@ -176,22 +161,10 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
         next_process = &processes[next_process_index];
         pid_t pid = fork();
         if (pid == 0) {
-            struct timespec start, end;
-            close(fd[next_process->id-1][0]);
-            clock_gettime(CLOCK_MONOTONIC, &start);
-            //char *argv[2];
-            //argv[0] = next_process->command;
-            //argv[1]=NULL;
-            printf("teste %d\n", next_process->id);
-            //execv(next_process->command, argv);
-            char comando[100];
-            sprintf(comando, "./%s", next_process->command);
-            system(comando);
-            clock_gettime(CLOCK_MONOTONIC, &end);
-            time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;;
-            snprintf(read_msg, sizeof(read_msg), "%f", time_used);
-            write(fd[next_process->id-1][1], read_msg, strlen(read_msg)+1);
-            close(fd[next_process->id-1][1]);
+            char *argv[2];
+            argv[0] = next_process->command;
+            argv[1]=NULL;
+            execv(next_process->command, argv);
             exit(0);
         } else {
             next_process->pid = pid;
@@ -201,9 +174,7 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
             next_process->status = 'E';
         }
     }
-    for (int i = 0; i < process_count; i++) { close(fd[i][1]); }
-    for (int i = 0; i < process_count; i++) { wait(NULL); }
-    printf("Makespan: %f\n", time);
+    printf("Makespan: %d\n", time);
 }
 
 Process * get_process_by_pid(Process * processes, int process_count, pid_t pid) {
