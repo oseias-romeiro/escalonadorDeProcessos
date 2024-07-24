@@ -5,6 +5,9 @@ Projeto de o Sistemas Operacionais (2024.1) desenvolvido em linguagem C para esc
 Especificações da máquina utilizada para testes:
 
 ```
+ Versão do compilador: gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1) 
+ 
+ Sistema Operacional: Ubuntu 20.04.3 LTS
 ```
 
 ## Setup
@@ -25,5 +28,5 @@ make all
 ## Execução
 
 ```sh
-escalona {numero_de_cores}
+./escalona {numero_de_cores}
 ```
