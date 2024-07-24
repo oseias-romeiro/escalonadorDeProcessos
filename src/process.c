@@ -1,5 +1,4 @@
 #include "process.h"
-#include <time.h>
 
 #define MAX_INT 1000000
 

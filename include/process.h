@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 #ifndef PROCESS_H
 #define PROCESS_H
