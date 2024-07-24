@@ -1,3 +1,17 @@
+/*
+    - Autores:
+        - David Herbert de Souza Brito - 200057405
+        - Gustavo Lopes Dezan - 202033463
+        - Julia Yuri Garcia Baba - 190057921
+        - Oseias Romeiro Magalhães - 211036123
+    
+    - Implementação do Escalonador de Workflow de Processos, o qual é do tipo Shorted Job First
+    
+    - Versão do compilador: gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1) 
+
+    - Sistema Operacional: Ubuntu 20.04.3 LTS
+*/
+
 #include "process.h"
 
 #define INPUT_FILENAME "programs.txt"
