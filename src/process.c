@@ -131,8 +131,7 @@ int find_next_process(Process *processes, int process_count) {
                 np_time = time;
                 np_index = i;
                 np_own_dependencies = processes[i].own_dependencies;
-            }
-            else if (time == np_time && processes[i].own_dependencies > np_own_dependencies) {
+            } else if (time == np_time && processes[i].own_dependencies > np_own_dependencies) {
                 np_time = time;
                 np_index = i;
                 np_own_dependencies = processes[i].own_dependencies;
@@ -142,11 +141,25 @@ int find_next_process(Process *processes, int process_count) {
     return np_index;
 }
 
+volatile sig_atomic_t process_finished = 0;
+
+void signal_handler(int sig) {
+    process_finished = 1;
+}
+
 void run_on_cores(Process *processes, int process_count, int num_cores) {
     int process_count_finished = 0;
     float time = 0.0f;
     float turnaround[process_count];
     siginfo_t siginfo;
+    
+    // Registra o handler para o sinal SIGUSR1
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGUSR1, &sa, NULL);
+
     // pipe
     int fd[process_count][2];
     char read_msg[100];
@@ -156,17 +169,25 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
             perror("pipe creation failed");
         }
     }
+    
     while (process_count_finished < process_count) {
         int next_process_index = find_next_process(processes, process_count);
         Process *next_process;
         if (next_process_index == -1 || num_cores == 0) {
+            // Espera até que um sinal indique que um processo terminou
+            while (!process_finished) {
+                pause();
+            }
+            process_finished = 0;
+            
+            // Verifica qual processo terminou
             waitid(P_ALL, 0, &siginfo, WEXITED);
             next_process = get_process_by_pid(processes, process_count, siginfo.si_pid);
-            if(next_process == NULL) {
+            if (next_process == NULL) {
                 printf("Erro ao buscar pid");
                 break;
             }
-            read(fd[next_process->id-1][0], read_msg, sizeof(read_msg));
+            read(fd[next_process->id - 1][0], read_msg, sizeof(read_msg));
             turnaround[next_process->id] += atof(read_msg);
             time = turnaround[next_process->id];
             printf("Processo %d finalizado | ", next_process->id);
@@ -176,11 +197,12 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
             num_cores++;
             continue;
         }
+        
         next_process = &processes[next_process_index];
         pid_t pid = fork();
         if (pid == 0) {
             struct timespec start, end;
-            close(fd[next_process->id-1][0]);
+            close(fd[next_process->id - 1][0]);
             clock_gettime(CLOCK_MONOTONIC, &start);
             //char *argv[2];
             //argv[0] = next_process->command;
@@ -190,21 +212,27 @@ void run_on_cores(Process *processes, int process_count, int num_cores) {
             sprintf(comando, "./%s", next_process->command);
             system(comando);
             clock_gettime(CLOCK_MONOTONIC, &end);
-            time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;;
+            time_used = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
             snprintf(read_msg, sizeof(read_msg), "%f", time_used);
-            write(fd[next_process->id-1][1], read_msg, strlen(read_msg)+1);
-            close(fd[next_process->id-1][1]);
+            write(fd[next_process->id - 1][1], read_msg, strlen(read_msg) + 1);
+            close(fd[next_process->id - 1][1]);
+            kill(getppid(), SIGUSR1);
             exit(0);
         } else {
             next_process->pid = pid;
             num_cores--;
-            turnaround[next_process->id] = time; 
+            turnaround[next_process->id] = time;
             printf("Executando processo %d\n", next_process->id);
             next_process->status = 'E';
         }
     }
-    for (int i = 0; i < process_count; i++) { close(fd[i][1]); }
-    for (int i = 0; i < process_count; i++) { wait(NULL); }
+    
+    for (int i = 0; i < process_count; i++) {
+        close(fd[i][1]);
+    }
+    for (int i = 0; i < process_count; i++) {
+        wait(NULL);
+    }
     printf("Makespan: %f\n", time);
 }
 
